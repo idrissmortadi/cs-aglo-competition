@@ -7,45 +7,80 @@ avg = 0
 count = 0
 
 
+def is_dominant(g, d):
+    # Get all nodes in the graph
+    all_nodes = set(g.nodes())
+
+    # Get nodes covered by `d` and their neighbors
+    covered_nodes = set(d)
+    for node in d:
+        covered_nodes.update(g.neighbors(node))
+
+    # Check if all nodes are covered
+    return all_nodes == covered_nodes
+
+
+def find_dominating_set(graph, excluded_nodes):
+    dominating_set = set()
+    uncovered = set(graph.nodes())
+
+    while uncovered:
+        # Find node with maximum uncovered neighbors, respecting exclusions
+        best_node = max(
+            uncovered,
+            key=lambda n: len(set(graph.neighbors(n)) & uncovered)
+            if n not in excluded_nodes
+            else len(set(graph.neighbors(n)) & uncovered) - 1_000_000,
+        )
+        dominating_set.add(best_node)
+        uncovered -= set(graph.neighbors(best_node)) | {best_node}
+
+    return dominating_set
+
+
+def best_dominating_pair(D, num_nodes):
+    min_score = float("inf")
+    best_pair = []
+
+    for i, d1 in enumerate(D):
+        for j, d2 in enumerate(D):
+            if i < j:  # Ensure each pair is only considered once
+                # Calculate score for the pair
+                intersection_size = len(d1 & d2)
+                score = (len(d1) + len(d2) + intersection_size) / num_nodes
+
+                # Update if a new minimum score is found
+                if score < min_score:
+                    min_score = score
+                    best_pair = (d1, d2)
+
+    intersection_size = len(best_pair[0] & best_pair[1])
+    return best_pair, min_score, intersection_size
+
+
 def dominant(g):
+    print("\n\n==== Dominating Sets Information ====")
     global avg, count
 
-    def find_dominating_set(graph, excluded_nodes):
-        dominating_set = set()
-        uncovered = set(graph.nodes())
-
-        while uncovered:
-            # Find the node that covers the most uncovered nodes
-            best_node = max(
-                uncovered,
-                key=lambda n: len(set(graph.neighbors(n)) & uncovered)
-                if n not in excluded_nodes
-                else 0,
-            )
-            dominating_set.add(best_node)
-            uncovered -= set(graph.neighbors(best_node)) | {best_node}
-
-        return dominating_set
-
-    # Find the first dominating set
+    # Calculate two dominating sets
     d1 = find_dominating_set(g, set())
-
-    # Find the second dominating set, trying to minimize overlap
     d2 = find_dominating_set(g, d1)
 
-    # Calculate the score
-    intersection_size = len(d1.intersection(d2))
+    # Calculate metrics
+    intersection_size = len(d1 & d2)
     score = (len(d1) + len(d2) + intersection_size) / len(g.nodes())
 
+    # Update average score
     count += 1
     avg = (avg * (count - 1) + score) / count
 
-    # Print useful info
-    print("\n\n==== Dominating Sets Information ====")
+    # Print useful information
     print(f"Number of nodes: {len(g.nodes())}")
     print(f"Number of edges: {len(g.edges())}")
     print(f"Size of d1: {len(d1)}")
     print(f"Size of d2: {len(d2)}")
+    print("Is d1 dominant?:", is_dominant(g, d1))
+    print("Is d2 dominant?:", is_dominant(g, d2))
     print(f"Intersection size (d1 ∩ d2): {intersection_size}")
     print(f"Score: {score:.4f}")
     print(f"Average Score: {avg:.4f}")
