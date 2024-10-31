@@ -1,15 +1,27 @@
-import sys, os, time
+import sys
+import os
+import time
 import networkx as nx
 
+avg = 0
+count = 0
+
+
 def dominant(g):
+    global avg, count
+
     def find_dominating_set(graph, excluded_nodes):
         dominating_set = set()
         uncovered = set(graph.nodes())
 
         while uncovered:
             # Find the node that covers the most uncovered nodes
-            best_node = max(uncovered, key=lambda n: len(set(graph.neighbors(n)) & uncovered) if n not in excluded_nodes else 0)
-
+            best_node = max(
+                uncovered,
+                key=lambda n: len(set(graph.neighbors(n)) & uncovered)
+                if n not in excluded_nodes
+                else 0,
+            )
             dominating_set.add(best_node)
             uncovered -= set(graph.neighbors(best_node)) | {best_node}
 
@@ -21,7 +33,25 @@ def dominant(g):
     # Find the second dominating set, trying to minimize overlap
     d2 = find_dominating_set(g, d1)
 
+    # Calculate the score
+    intersection_size = len(d1.intersection(d2))
+    score = (len(d1) + len(d2) + intersection_size) / len(g.nodes())
+
+    count += 1
+    avg = (avg * (count - 1) + score) / count
+
+    # Print useful info
+    print("\n\n==== Dominating Sets Information ====")
+    print(f"Number of nodes: {len(g.nodes())}")
+    print(f"Number of edges: {len(g.edges())}")
+    print(f"Size of d1: {len(d1)}")
+    print(f"Size of d2: {len(d2)}")
+    print(f"Intersection size (d1 ∩ d2): {intersection_size}")
+    print(f"Score: {score:.4f}")
+    print(f"Average Score: {avg:.4f}")
+
     return list(d1), list(d2)
+
 
 #########################################
 #### Ne pas modifier le code suivant ####
