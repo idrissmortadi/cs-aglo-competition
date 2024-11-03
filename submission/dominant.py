@@ -84,6 +84,7 @@ def dominant(g):
     print(f"Intersection size (d1 ∩ d2): {intersection_size}")
     print(f"Score: {score:.4f}")
     print(f"Average Score: {avg:.4f}")
+    print(f"Maximal degree of g: {max(g.degree, key=lambda x: x[1])[1]}")
 
     return list(d1), list(d2)
 
